@@ -23,3 +23,7 @@
 ### 5. Stock Management:
 - Create a dynamic view to monitor stock status, identifying products that are out of stock to 
   ensure timely restocking and efficient inventory management.
+
+# About the Database:
+
+![image](https://github.com/user-attachments/assets/c832a8da-e3c8-4577-94af-ea72df7abf4d)
