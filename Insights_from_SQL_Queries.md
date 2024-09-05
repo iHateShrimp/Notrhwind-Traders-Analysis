@@ -4,6 +4,7 @@ SELECT CategoryID, CategoryName, Description FROM [dbo].[Categories]
 ```
 ![image](https://github.com/user-attachments/assets/691425fc-5b37-43eb-bf21-a340bd52bf00)
 ### --2. Kiểm tra số lượng sản phẩm theo danh mục ###
+```sql
 SELECT CategoryName, COUNT(ProductName) AS Number_of_Products
 FROM [dbo].[Products] P
 JOIN [dbo].[Categories] C
