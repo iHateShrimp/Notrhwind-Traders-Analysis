@@ -26,4 +26,4 @@
 
 # About the Database:
 
-![image](https://github.com/user-attachments/assets/c832a8da-e3c8-4577-94af-ea72df7abf4d)
+![image](https://github.com/user-attachments/assets/18d6eaff-8c45-4c57-8735-50f767b56df6)
