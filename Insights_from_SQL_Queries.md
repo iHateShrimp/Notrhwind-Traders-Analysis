@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/b3be7a19-90b0-4c07-8045-cda238f5a62d)![image](https://github.com/user-attachments/assets/5be58ca0-8ee3-402f-a3ef-c38a5722146b)## Data Exploration: ##
+## Data Exploration: ##
 
 > In the first part of the analysis, to gain some basic information about each table in a database, I do some simple queries such as the following:
 
