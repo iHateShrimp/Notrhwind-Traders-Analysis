@@ -142,9 +142,10 @@ GROUP BY C.CategoryID, CategoryName;
 
 ![image](https://github.com/user-attachments/assets/ba93b34b-743b-41f8-8248-22b2333e2fbf)
 
+
+
 > I explore key business insights by diving deep into product performance, seasonal trends, and customer purchasing behavior. Imagine you're managing inventory for a retail company and need to predict which product categories will dominate each quarter. By identifying top-selling items and tracking their revenue, we can uncover patterns that drive sales, allowing us to optimize stock levels, plan marketing strategies, and even target high-value customers more effectively. These insights not only sharpen decision-making but also boost profitability in a competitive market.
 
---5. Tìm ra trong từng quý của năm, đâu là category được chọn nhiều nhất, điều này sẽ tìm hiểu xu hướng tiêu dùng theo mùa, đâu là loại sản phẩm trong mùa cần lượng hàng nhiều nhất để đáp ứng như cầu của thị trường 
 ### --5. Which two categories were the most selected in each quarter of the year: ###
 ```sql
 WITH CategorySelected AS (
@@ -162,7 +163,8 @@ WITH CategorySelected AS (
 			JOIN [dbo].[Orders] O
 			ON D.OrderID = O.OrderID
 
-			GROUP BY C.CategoryID, C.CategoryName, DATEPART(Quarter, O.OrderDate), 				DATEPART(Year, O.OrderDate)
+			GROUP BY C.CategoryID, C.CategoryName, DATEPART(Quarter, O.OrderDate),
+				 DATEPART(Year, O.OrderDate)
 			),
 RankedCategory AS (
 		SELECT *, RANK() OVER (PARTITION BY Year, Quarter
@@ -201,7 +203,7 @@ WITH ProductRevenue AS (
 RankedProducts AS (
 		SELECT CategoryID, CategoryName, ProductName,
 		Quarter, Year, Revenue,
-		RANK() OVER(PARTITION BY  CategoryID, Year, Quarter ORDER BY Revenue DESC) 				AS RANK 
+		RANK() OVER(PARTITION BY  CategoryID, Year, Quarter ORDER BY Revenue DESC) AS RANK 
 		FROM ProductRevenue
 			);
 
@@ -218,7 +220,7 @@ WITH ProductRankings AS (
 				P.SupplierID,
 				S.CompanyName,
 				SUM(D.Quantity) AS Total_Orders,
-				RANK() OVER(PARTITION BY P.CategoryID 									ORDER BY SUM(D.Quantity) DESC) AS ProductRank
+				RANK() OVER(PARTITION BY P.CategoryID ORDER BY SUM(D.Quantity) DESC) AS ProductRank
 			FROM [dbo].[Products] P
 
 			JOIN [dbo].[Order Details] D
@@ -266,102 +268,129 @@ To solve this problem, I use a VIEW() to create a table that regularly checks th
 ![image](https://github.com/user-attachments/assets/f374e23a-0105-4dbe-a17d-8771dd0510fa)
 
 
-/**9.1. Giả sử, ta cần xác định doanh thu của các sản phẩm bán chạy và không bán chạy qua từng quý của năm bằng cách chia tập dữ liệu ra làm 4 mức:
-1 là mức doanh thu cao nhất và giảm dần, chúng ta sẽ so sánh nhóm bán chạy nhất và nhóm bán chạy nhất, khác biệt về doanh thu**/
+### 9.1. Assuming we divide the products into 4 groups based on revenue, in descending order, we need to observe the revenue difference between the top group and the bottom group for each quarter of the year: ###
+```sql
 WITH QuarterlyProductSales AS (
-						SELECT C.CategoryID, C.CategoryName, P.ProductName,
-							DATEPART(Quarter, O.OrderDate) AS Quarter,
-							DATEPART(Year, O.OrderDate) AS Year,
-							SUM( D.UnitPrice * Quantity) AS Revenue
-						FROM [dbo].[Order Details] D
+			SELECT C.CategoryID, C.CategoryName, P.ProductName,
+				DATEPART(Quarter, O.OrderDate) AS Quarter,
+				DATEPART(Year, O.OrderDate) AS Year,
+				SUM( D.UnitPrice * Quantity) AS Revenue
+			FROM [dbo].[Order Details] D
 
-						JOIN [dbo].[Products] P 
-						ON D.ProductID = P.ProductID
+			JOIN [dbo].[Products] P 
+			ON D.ProductID = P.ProductID
 
-						JOIN [dbo].[Categories] C
-						ON P.CategoryID = C.CategoryID
+			JOIN [dbo].[Categories] C
+			ON P.CategoryID = C.CategoryID
 
-						JOIN [dbo].[Orders] O 
-						ON D.OrderID = O.OrderID
-						GROUP BY C.CategoryID, C.CategoryName, P.ProductName, DATEPART(Quarter, O.OrderDate), DATEPART(Year, O.OrderDate)
-					),
+			JOIN [dbo].[Orders] O 
+			ON D.OrderID = O.OrderID
+			GROUP BY C.CategoryID, C.CategoryName, P.ProductName, DATEPART(Quarter, O.OrderDate), DATEPART(Year, O.OrderDate)
+		),
 				
 Ranking AS (
-		SELECT *, NTILE(4) OVER (ORDER BY REVENUE DESC) AS Rank
-		FROM QuarterlyProductSales
-			),
+	SELECT *, NTILE(4) OVER (ORDER BY REVENUE DESC) AS Rank
+	FROM QuarterlyProductSales
+		),
 
 SalesComparision AS (
-				SELECT Year, Quarter, 
-				SUM( CASE WHEN Rank = 1 THEN Revenue ELSE 0 END) AS Top_Sales_Revenue,
-				SUM( CASE WHEN Rank = 4 THEN Revenue ELSE 0 END) AS Bottom_Sales_Revenue
-				FROM Ranking
-				GROUP BY Year, Quarter
-				)
-----------
+		SELECT Year, Quarter, 
+		SUM( CASE WHEN Rank = 1 THEN Revenue ELSE 0 END) AS Top_Sales_Revenue,
+		SUM( CASE WHEN Rank = 4 THEN Revenue ELSE 0 END) AS Bottom_Sales_Revenue
+		FROM Ranking
+		GROUP BY Year, Quarter
+		);
+
 SELECT *, Top_Sales_Revenue - Bottom_Sales_Revenue AS Revenue_Difference
 FROM SalesComparision
-ORDER BY Year, Quarter
+ORDER BY Year, Quarter;
+```
+At first, I identify the best-selling and non-selling products in each quarter over the years by using NTILE() and dividing the revenue dataset into 4 groups. Group 1 corresponds to the best-selling products, decreasing down to Group 4, which includes non-selling products. Then, I execute the SalesComparison CTE to compare the revenue difference between the two groups.
 
---9.2. Tương tự như vậy, thay vì hiển thị ra sự chênh lệch doanh thu, hiển thị ra tến sản phẩm bán chạy nhất qua từng quý của năm để có cái nhìn rõ hơn về các sản phẩm đó
+![image](https://github.com/user-attachments/assets/762f6850-8119-44a7-b9b4-c4859e1c7d96)
+
+From the data displayed, we can observe a significant revenue disparity between the top-selling products and the least-selling products across different quarters and years. In particular, the difference in sales between the top and bottom products increases over time, with notable jumps in the last quarter of 1997 and the first quarter of 1998. For instance, the revenue difference grows from 31,424.50 in Q3 of 1996 to 247,436.62 in Q1 of 1998. This indicates a widening gap between the top-performing products and the less successful ones
+
+### --9.2. Instead of displaying the revenue difference, show the name of the best-selling product for each quarter of the year to provide a clearer view of those products: ###
+```sql
 WITH QuarterlyProduct AS (
-						SELECT P.ProductID, P.ProductName, C.CategoryID, P.SupplierID,
-							DATEPART(Quarter, O.OrderDate) AS Quarter,
-							DATEPART(Year, O.OrderDate) AS Year,
-							SUM( D.UnitPrice * Quantity) AS Revenue
-						FROM [dbo].[Order Details] D
+			SELECT P.ProductID, P.ProductName, C.CategoryID, P.SupplierID,
+				DATEPART(Quarter, O.OrderDate) AS Quarter,
+				DATEPART(Year, O.OrderDate) AS Year,
+				SUM( D.UnitPrice * Quantity) AS Revenue
+			FROM [dbo].[Order Details] D
 
-						JOIN [dbo].[Products] P 
-						ON D.ProductID = P.ProductID
+			JOIN [dbo].[Products] P 
+			ON D.ProductID = P.ProductID
 
-						JOIN [dbo].[Categories] C
-						ON P.CategoryID = C.CategoryID
+			JOIN [dbo].[Categories] C
+			ON P.CategoryID = C.CategoryID
 
-						JOIN [dbo].[Orders] O 
-						ON D.OrderID = O.OrderID
-						GROUP BY P.ProductID, P.ProductName, C.CategoryID, P.SupplierID, DATEPART(Quarter, O.OrderDate), DATEPART(Year, O.OrderDate)
-						),
+			JOIN [dbo].[Orders] O 
+			ON D.OrderID = O.OrderID
+			GROUP BY P.ProductID, P.ProductName, C.CategoryID, P.SupplierID, DATEPART(Quarter, O.OrderDate), DATEPART(Year, O.OrderDate)
+			),
+
 RankedProducts AS (
-				SELECT *,
-					NTILE(4) OVER(ORDER BY Revenue DESC) AS Ranked
-					FROM QuarterlyProduct
-					)
-----------
+		SELECT *,
+			NTILE(4) OVER(ORDER BY Revenue DESC) AS Ranked
+			FROM QuarterlyProduct
+			);
+
 SELECT ProductID, ProductName, CategoryID, SupplierID, Revenue, Year, Quarter
 FROM RankedProducts 
 WHERE Ranked = 1
-ORDER BY  Year, Quarter
+ORDER BY  Year, Quarter;
+```
 
---9.3. Trong số 25% kể trên, hãy cho biết sản phẩm thuộc loại nào chiếm phần cao nhất 
+I provide the query results showing the top-selling products, which are in group 1, along with the category type, supplier code, and the total revenue contributed by each product.
+
+![image](https://github.com/user-attachments/assets/c2692bfa-84d7-4654-b12e-cc93e27884fb)
+
+
+### --9.3. Among the top 25% of top-selling products, list the order of categories with the highest number of products sold: ###
+```sql
 WITH QuarterlyProduct AS (
-						SELECT P.ProductID, P.ProductName, C.CategoryID, C.CategoryName, P.SupplierID,
-							SUM( D.UnitPrice * Quantity) AS Revenue
-						FROM [dbo].[Order Details] D
+			SELECT P.ProductID,
+				P.ProductName,
+				C.CategoryID,
+				C.CategoryName,
+				P.SupplierID,
+				SUM( D.UnitPrice * Quantity) AS Revenue
+			FROM [dbo].[Order Details] D
 
-						JOIN [dbo].[Products] P 
-						ON D.ProductID = P.ProductID
+			JOIN [dbo].[Products] P 
+			ON D.ProductID = P.ProductID
 
-						JOIN [dbo].[Categories] C
-						ON P.CategoryID = C.CategoryID
+			JOIN [dbo].[Categories] C
+			ON P.CategoryID = C.CategoryID
 
-						JOIN [dbo].[Orders] O 
-						ON D.OrderID = O.OrderID
-						GROUP BY P.ProductID, P.ProductName, C.CategoryID,C.CategoryName, P.SupplierID
-						),
+			JOIN [dbo].[Orders] O 
+			ON D.OrderID = O.OrderID
+			GROUP BY P.ProductID,
+				 P.ProductName,
+				 C.CategoryID,
+				 C.CategoryName,
+				 P.SupplierID
+			),
 RankedProducts AS (
-				SELECT *,
-					NTILE(4) OVER(ORDER BY Revenue DESC) AS Ranked
-					FROM QuarterlyProduct
-					)
-----------
+		SELECT *,
+			NTILE(4) OVER(ORDER BY Revenue DESC) AS Ranked
+			FROM QuarterlyProduct
+			);
+
 SELECT CategoryID, CategoryName, COUNT(CategoryID) Product_of_each_Category
 FROM RankedProducts 
 WHERE Ranked = 1 
 GROUP BY CategoryID, CategoryName
-ORDER BY COUNT(CategoryID) DESC
+ORDER BY COUNT(CategoryID) DESC;
+```
 
-/**10. Giả sử, khách hàng có giá trị đơn hàng cao hơn 75% giá trị đơn hàng của các khách hàng khác thì được xem là High-Value Customers,
-và ngược lại, ta cần in ra danh sách các customers có giá trị đơn hàng cao, gồm ID, tên, số lượng đơn đặt hàng, tổng giá trị đơn hàng**/
+![image](https://github.com/user-attachments/assets/1c7cce80-0261-4528-bb5f-b07ab6c9f6ff)
+
+It point that Dairy Products seems to dominate in terms of the number of high-performing items, while the other categories have fewer top sellers.
+
+### --10. Assuming that customers with an order value higher than 75% of other customers' order values are considered High-Value Customers, print a list of these customers including their ID, name, number of orders, and total order value: ###
 ```sql
 WITH TotalValues AS (
 		SELECT C.CustomerID, C.CompanyName, C.ContactName, 
@@ -390,4 +419,4 @@ SELECT CustomerID, CompanyName, ContactName, Total_order_Value, Percentrank,
 FROM  HighValues
 WHERE Percentrank > 0.75;
 ```
-
+For this question, I use PERCENT_RANK() to categorize customers based on their total order value. By calculating the rank of each customer's total order value relative to all other customers, it helps identify customers who are in the top 25% of total order value and then name it as "High-Value Customers". 
