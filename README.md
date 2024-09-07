@@ -28,5 +28,5 @@
 
 ![image](https://github.com/user-attachments/assets/18d6eaff-8c45-4c57-8735-50f767b56df6)
 
-Click on [Insights_from_SQL_Queries.md]()  to refer to my query.
+Click on [Insights_from_SQL_Queries.md](https://github.com/quachquoccuong2904/Notrhwind-Traders-Analysis/blob/main/Insights_from_SQL_Queries.md)  to refer to my query.
 
