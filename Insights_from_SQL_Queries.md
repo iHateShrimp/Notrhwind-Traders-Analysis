@@ -142,9 +142,10 @@ GROUP BY C.CategoryID, CategoryName;
 
 ![image](https://github.com/user-attachments/assets/ba93b34b-743b-41f8-8248-22b2333e2fbf)
 
+----------------------------------------
+----------------------------------------
 
-
-> I explore key business insights by diving deep into product performance, seasonal trends, and customer purchasing behavior. Imagine you're managing inventory for a retail company and need to predict which product categories will dominate each quarter. By identifying top-selling items and tracking their revenue, we can uncover patterns that drive sales, allowing us to optimize stock levels, plan marketing strategies, and even target high-value customers more effectively. These insights not only sharpen decision-making but also boost profitability in a competitive market.
+Now, I will explore key business insights by diving deep into product performance, seasonal trends, and customer purchasing behavior. Imagine you're managing inventory for a retail company and need to predict which product categories will dominate each quarter. By identifying top-selling items and tracking their revenue, we can uncover patterns that drive sales, allowing us to optimize stock levels, plan marketing strategies, and even target high-value customers more effectively. These insights not only sharpen decision-making but also boost profitability in a competitive market.
 
 ### --5. Which two categories were the most selected in each quarter of the year: ###
 ```sql
